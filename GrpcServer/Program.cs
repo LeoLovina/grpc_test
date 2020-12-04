@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GrpcTest
+namespace GrpcServer
 {
     public class Program
     {
