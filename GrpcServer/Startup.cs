@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GrpcServer.Services;
 
 namespace GrpcServer
 {
@@ -31,6 +32,7 @@ namespace GrpcServer
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcService<GreeterService>();
+                endpoints.MapGrpcService<PersonService>();
 
                 endpoints.MapGet("/", async context =>
                 {
