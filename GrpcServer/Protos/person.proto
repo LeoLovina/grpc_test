@@ -6,12 +6,14 @@ package person;
 
 service PersonProto{
 	rpc GetAll(PersonRequest) returns (PersonResponse); 
+	rpc StreamFromServer(PersonRequest) returns (stream PersonResponse);
+	rpc StreamFromClient(stream PersonRequest) returns (PersonResponse);
+	rpc StreamBothWay(stream PersonRequest) returns (stream PersonResponse);
 }
 
 message PersonRequest {
 	int32 id =1;
 }
-
 
 message PersonResponse {
 	int32 id =1;
