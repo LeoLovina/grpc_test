@@ -32,7 +32,6 @@ namespace GrpcClient
 
         }
 
-
         private static void ConfigureServices(IServiceCollection serviceCollection)
         {
             var configuration = new ConfigurationBuilder()
@@ -48,6 +47,11 @@ namespace GrpcClient
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                  .CreateLogger();
+
+            serviceCollection.AddGrpcClient<PersonProto.PersonProtoClient>(o =>
+            {
+                o.Address = new Uri("https://localhost:5001");
+            });
 
             // Add app
             serviceCollection.AddTransient<App>();

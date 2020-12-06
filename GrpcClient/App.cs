@@ -14,9 +14,11 @@ namespace GrpcClient
     public class App
     {
         private readonly ILogger<App> _logger;
-        public App(ILogger<App> logger)
+        private readonly PersonProto.PersonProtoClient _personClient;
+        public App(ILogger<App> logger, PersonProto.PersonProtoClient personClient)
         {
             this._logger = logger;
+            this._personClient = personClient;
         }
 
         public async Task Run()
@@ -33,8 +35,7 @@ namespace GrpcClient
 
                 Console.WriteLine($"Greeting: {reply.Message}");
 
-                var personClient = new PersonProto.PersonProtoClient(channel);
-                var PersonResponse = await personClient.UnaryAsync(new PersonRequest { Id = 5 });
+                var PersonResponse = await _personClient.UnaryAsync(new PersonRequest { Id = 5 });
                 Console.WriteLine($"PersonResponse = {JsonConvert.SerializeObject(PersonResponse)}");
                 DateTime startDate = PersonResponse.StartDate.ToDateTime();
                 DateTimeOffset startDateOffset = PersonResponse.StartDate.ToDateTimeOffset();
@@ -43,7 +44,7 @@ namespace GrpcClient
                     $"PersonResponse: {startDate} {PersonResponse.FirstName} {PersonResponse.LastName}");
 
                 // Test StreamFromServer
-                using (var call = personClient.StreamFromServer(new PersonRequest() { Id = 1 }))
+                using (var call = _personClient.StreamFromServer(new PersonRequest() { Id = 1 }))
                 {
                     while (await call.ResponseStream.MoveNext(new CancellationToken(false)))
                     {
@@ -54,7 +55,7 @@ namespace GrpcClient
                 }
 
                 // Test StreamFromClient
-                using (var call = personClient.StreamFromClient())
+                using (var call = _personClient.StreamFromClient())
                 {
                     for (var i = 0; i < 5; i++)
                     {
