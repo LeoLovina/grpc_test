@@ -5,55 +5,52 @@ using System.Threading;
 using System.Threading.Tasks;
 using GrpcClient.Protos;
 using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using System.IO;
+using Serilog;
 
 namespace GrpcClient
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            Console.WriteLine("Hello gRPC!");
-            using var channel = GrpcChannel.ForAddress("https://localhost:5001");
-            var client = new Greeter.GreeterClient(channel);
-            var reply = await client.SayHelloAsync(
-                new HelloRequest {Name = "GreeterClient"});
+            // Start App
+            MainAsync().Wait();
+        }
 
-            Console.WriteLine($"Greeting: {reply.Message}");
+        private static async Task MainAsync()
+        {
+            // Create service collection
+            ServiceCollection serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
 
-            var personClient = new PersonProto.PersonProtoClient(channel);
-            var PersonResponse = await personClient.UnaryAsync(new PersonRequest {Id = 5});
-            Console.WriteLine($"PersonResponse = {JsonConvert.SerializeObject(PersonResponse)}");
-            DateTime startDate = PersonResponse.StartDate.ToDateTime();
-            DateTimeOffset startDateOffset = PersonResponse.StartDate.ToDateTimeOffset();
-            var duration = PersonResponse.Duration?.ToTimeSpan();
-            Console.WriteLine(
-                $"PersonResponse: {startDate} {PersonResponse.FirstName} {PersonResponse.LastName}");
+            // Create service provider
+            IServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
+            await serviceProvider.GetService<App>().Run().ConfigureAwait(false);
 
-            // Test StreamFromServer
-            using (var call = personClient.StreamFromServer(new PersonRequest() {Id = 1}))
-            {
-                while (await call.ResponseStream.MoveNext(new CancellationToken(false)))
-                {
-                    var person = call.ResponseStream.Current;
-                    Console.WriteLine(
-                        $"Received: {PersonResponse.Id} {PersonResponse.FirstName} {PersonResponse.LastName}");
-                }
-            }
+        }
 
-            // Test StreamFromClient
-            using (var call = personClient.StreamFromClient())
-            {
-                for (var i = 0; i < 5; i++)
-                {
-                    await call.RequestStream.WriteAsync(new PersonRequest()
-                    {
-                        Id = i
-                    });
-                }
-                await call.RequestStream.CompleteAsync();
-                PersonResponse summary = await call.ResponseAsync;
-            }
-            channel.ShutdownAsync().Wait();
+
+        private static void ConfigureServices(IServiceCollection serviceCollection)
+        {
+            var configuration = new ConfigurationBuilder()
+                                    .SetBasePath(Directory.GetCurrentDirectory())
+                                    .AddJsonFile("appsettings.json")
+                                    .Build();
+
+            // Add logging
+            serviceCollection.AddLogging(loggingBuilder =>
+                loggingBuilder.AddSerilog(dispose: true));
+
+            // Initialize serilog logger
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                 .CreateLogger();
+
+            // Add app
+            serviceCollection.AddTransient<App>();
         }
     }
 }
