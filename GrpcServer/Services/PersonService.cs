@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcServer.Protos;
 using Microsoft.Extensions.Logging;
@@ -18,15 +19,21 @@ namespace GrpcServer.Services
             this._logger = logger;
         }
 
-        public override Task<PersonResponse> GetAll(PersonRequest request, ServerCallContext context)
+        public override Task<PersonResponse> Unary(PersonRequest request, ServerCallContext context)
         {
-            return Task.FromResult(new PersonResponse()
-                {
-                    Id = request.Id,
-                    FirstName = $"First {DateTime.Now.Minute}",
-                    LastName = $"Last {DateTime.Now.Second}"
-                }
-            );
+            var person = new PersonResponse()
+            {
+                Id = request.Id,
+                FirstName = $"First {DateTime.Now.Minute}",
+                LastName = $"Last {DateTime.Now.Second}",
+                StartDate = Timestamp.FromDateTime(DateTime.UtcNow),
+                Duration = Duration.FromTimeSpan(new TimeSpan(1, 2, 3)),
+            };
+            person.Roles.Add("admin");
+            person.Roles.Add("user");
+            person.Attributes["key"] = "Jason";
+            return Task.FromResult(person
+            ); 
         }
 
         public override async Task StreamFromServer(PersonRequest request, IServerStreamWriter<PersonResponse> responseStream, ServerCallContext context)

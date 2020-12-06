@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using GrpcClient.Protos;
+using Newtonsoft.Json;
 
 namespace GrpcClient
 {
@@ -20,9 +21,13 @@ namespace GrpcClient
             Console.WriteLine($"Greeting: {reply.Message}");
 
             var personClient = new PersonProto.PersonProtoClient(channel);
-            var PersonResponse = await personClient.GetAllAsync(new PersonRequest {Id = 5});
+            var PersonResponse = await personClient.UnaryAsync(new PersonRequest {Id = 5});
+            Console.WriteLine($"PersonResponse = {JsonConvert.SerializeObject(PersonResponse)}");
+            DateTime startDate = PersonResponse.StartDate.ToDateTime();
+            DateTimeOffset startDateOffset = PersonResponse.StartDate.ToDateTimeOffset();
+            var duration = PersonResponse.Duration?.ToTimeSpan();
             Console.WriteLine(
-                $"PersonResponse: {PersonResponse.Id} {PersonResponse.FirstName} {PersonResponse.LastName}");
+                $"PersonResponse: {startDate} {PersonResponse.FirstName} {PersonResponse.LastName}");
 
             // Test StreamFromServer
             using (var call = personClient.StreamFromServer(new PersonRequest() {Id = 1}))
@@ -50,7 +55,5 @@ namespace GrpcClient
             }
             channel.ShutdownAsync().Wait();
         }
-
-
     }
 }

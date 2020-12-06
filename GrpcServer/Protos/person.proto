@@ -1,11 +1,13 @@
 syntax = "proto3";
 
 option csharp_namespace = "GrpcServer.Protos";
-
 package person;
 
+import "google/protobuf/duration.proto";  
+import "google/protobuf/timestamp.proto";
+
 service PersonProto{
-	rpc GetAll(PersonRequest) returns (PersonResponse); 
+	rpc Unary(PersonRequest) returns (PersonResponse); 
 	rpc StreamFromServer(PersonRequest) returns (stream PersonResponse);
 	rpc StreamFromClient(stream PersonRequest) returns (PersonResponse);
 	rpc StreamBothWay(stream PersonRequest) returns (stream PersonResponse);
@@ -19,4 +21,8 @@ message PersonResponse {
 	int32 id =1;
 	string FirstName = 2;
 	string LastName = 3;
+	google.protobuf.Timestamp StartDate = 4;
+	google.protobuf.Duration duration = 5;
+	repeated string roles = 6; 
+	map<string, string> attributes = 7;
 }
